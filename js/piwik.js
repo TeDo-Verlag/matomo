@@ -1999,6 +1999,11 @@ if (typeof window.Piwik !== 'object') {
                     return false;
                 }
 
+                // tedo das reicht - stop here
+                if (el.className.match(/\bscroll-content\b/)) {
+                    return true;
+                }
+
                 //-- Return true for document node
                 if (9 === p.nodeType) {
                     return true;
@@ -2034,7 +2039,11 @@ if (typeof window.Piwik !== 'object') {
                 //-- If we have a parent, let's continue:
                 if (p) {
                     //-- Check if the parent can hide its children.
-                    if (('hidden' === _getStyle(p, 'overflow') || 'scroll' === _getStyle(p, 'overflow'))) {
+                    // tedo - einige Elemente haben hier etwas wie 'hidden scroll'
+                    var pStyle = _getStyle(p, 'overflow');
+                    // tedo - auskommentieren beim testen
+                    // console.log("height: %d, offset: %d, scrollTop: %d, top: %d, pStyle: '%s' of '%s'", h, p.offsetTop, p.scrollTop, t, pStyle, p);
+                    if (pStyle && pStyle.match(/\b(hidden|scroll)\b/)) {
                         //-- Only check if the offset is different for the parent
                         if (
                             //-- If the target element is to the right of the parent elm
@@ -2700,6 +2709,9 @@ if (typeof window.Piwik !== 'object') {
             {
                 var isItVisible  = isVisible(node);
                 var isInViewport = this.isOrWasNodeInViewport(node);
+                // tedo - auskommentieren beim testen
+                // console.log('isVisible: %d, isInViewport: %d', +isItVisible, +isInViewport);
+                // console.log('isImpressed %d, node: %s.%s', +(isItVisible && isInViewport), node, node.getAttribute('data-content-piece'));
                 return isItVisible && isInViewport;
             },
             buildInteractionRequestParams: function (interaction, name, piece, target)
@@ -2750,6 +2762,8 @@ if (typeof window.Piwik !== 'object') {
                 var name   = this.findContentName(node);
                 var piece  = this.findContentPiece(node);
                 var target = this.findContentTarget(node);
+                var nr     = query.getAttributeValueFromNode(node, 'data-content-nr') ||
+                             query.getAttributeValueFromNode(node, 'ng-reflect-nr'); // später entfernen
 
                 name   = this.trim(name);
                 piece  = this.trim(piece);
@@ -2758,7 +2772,8 @@ if (typeof window.Piwik !== 'object') {
                 return {
                     name: name || 'Unknown',
                     piece: piece || 'Unknown',
-                    target: target || ''
+                    target: target || '',
+                    nr: nr ? trim(nr) : ''
                 };
             },
             collectContent: function (contentNodes)
@@ -4957,7 +4972,8 @@ if (typeof window.Piwik !== 'object') {
                     if (trackedContent &&
                         trackedContent.name === contentBlock.name &&
                         trackedContent.piece === contentBlock.piece &&
-                        trackedContent.target === contentBlock.target) {
+                        trackedContent.target === contentBlock.target &&
+                        trackedContent.nr === contentBlock.nr) {
                         return true;
                     }
                 }
